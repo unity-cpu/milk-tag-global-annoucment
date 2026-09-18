@@ -1,44 +1,48 @@
-import { next } from '@vercel/edge';
-
 export const config = {
-  // Protect every route
-  matcher: ['/(.*)'],
+  matcher: ["/((?!api/login|_next|favicon.ico).*)"],
 };
 
+function toBase64Url(str) {
+  // Edge runtime has btoa
+  const b64 = btoa(str);
+  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
 export default function middleware(request) {
+  const url = new URL(request.url);
+  const path = url.pathname;
+
+  // Always allow the login page
+  if (path === "/login.html" || path === "/login") {
+    return;
+  }
+
   const password = process.env.SITE_PASSWORD;
 
-  // If no password is set in Vercel env, block everything
   if (!password) {
-    return new Response('SITE_PASSWORD is not set in Vercel Environment Variables.', {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain' },
-    });
+    return new Response(
+      "SITE_PASSWORD is not set.\n\nVercel → Settings → Environment Variables → add SITE_PASSWORD → Redeploy.",
+      { status: 500, headers: { "Content-Type": "text/plain; charset=utf-8" } }
+    );
   }
 
-  const authHeader = request.headers.get('authorization');
+  const expectedToken = toBase64Url("ok:" + password);
 
-  if (authHeader) {
-    const [scheme, encoded] = authHeader.split(' ');
+  const cookieHeader = request.headers.get("cookie") || "";
+  const cookies = Object.fromEntries(
+    cookieHeader
+      .split(";")
+      .map((c) => c.trim())
+      .filter(Boolean)
+      .map((c) => {
+        const i = c.indexOf("=");
+        return i === -1 ? [c, ""] : [c.slice(0, i), c.slice(i + 1)];
+      })
+  );
 
-    if (scheme === 'Basic' && encoded) {
-      // Decode "username:password" (we only care about the password)
-      const decoded = atob(encoded);
-      const colonIndex = decoded.indexOf(':');
-      const providedPassword = colonIndex === -1 ? decoded : decoded.slice(colonIndex + 1);
-
-      if (providedPassword === password) {
-        return next();
-      }
-    }
+  if (cookies.site_auth === expectedToken) {
+    return; // authenticated
   }
 
-  // Ask the browser to show the native password prompt
-  return new Response('Authentication required', {
-    status: 401,
-    headers: {
-      'WWW-Authenticate': 'Basic realm="untiys text thing"',
-      'Content-Type': 'text/plain',
-    },
-  });
+  return Response.redirect(new URL("/login.html", request.url), 302);
 }

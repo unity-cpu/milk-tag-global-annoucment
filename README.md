@@ -1,45 +1,44 @@
 # untiys text thing
 
-Password-protected site for Vercel.  
-**The password lives only in Vercel Environment Variables — it is never in the source code.**
+Password-protected site. Password lives **only** in Vercel env vars.
 
-## How the password works
+## How it works
 
-- Uses Vercel **Edge Middleware** + HTTP Basic Auth
-- Browser shows the native login popup
-- Password is read from the env var `SITE_PASSWORD`
-- Nothing on the page is reachable until the correct password is entered
+1. Visit any page → redirected to `/login.html`
+2. Enter password → checked by `/api/login` against `SITE_PASSWORD`
+3. On success a secure cookie is set → you can use the app
+4. Cookie lasts 24 hours
 
-## Setup on Vercel
+## Setup (do all steps)
 
-### 1. Deploy the project
+### 1. Deploy the whole folder
+Must include:
+- `index.html` (the app)
+- `login.html` (password form)
+- `middleware.js` (redirects if not logged in)
+- `api/login.js` (checks password)
+- `vercel.json`
+- `package.json`
 
 ```bash
 cd untiys-text-thing
 npx vercel
 ```
 
-(or drag the folder onto vercel.com/new, or connect a GitHub repo)
+### 2. Add environment variable
+Vercel dashboard → your project → **Settings → Environment Variables**
 
-### 2. Add the password (important)
+| Name            | Value            | Environments                    |
+|-----------------|------------------|---------------------------------|
+| `SITE_PASSWORD` | your-real-pass   | Production, Preview, Development |
 
-1. Open your project on [vercel.com](https://vercel.com)
-2. Go to **Settings → Environment Variables**
-3. Add a new variable:
+### 3. Redeploy
+Deployments → ⋯ → **Redeploy**
 
-| Name            | Value              | Environments          |
-|-----------------|--------------------|-----------------------|
-| `SITE_PASSWORD` | your-secret-pass   | Production, Preview, Development |
+Env vars only apply after a new deploy.
 
-4. **Redeploy** the project (Environment Variables only apply after a new deployment)
+### 4. Test
+Open the site (preferably Incognito). You should land on the purple **LOCKED** page and must enter the password.
 
-### 3. Done
-
-Visit the site → browser asks for username + password.  
-- Username can be anything (or left blank)  
-- Password = the value you set in `SITE_PASSWORD`
-
-## Changing the password later
-
-Just edit `SITE_PASSWORD` in the Vercel dashboard and redeploy.  
-No code changes needed.
+## Change password later
+Edit `SITE_PASSWORD` in Vercel → Redeploy. No code changes.
