@@ -1,42 +1,45 @@
 # untiys text thing
 
-Password-protected static site ready for Vercel.
+Password-protected site for Vercel.  
+**The password lives only in Vercel Environment Variables — it is never in the source code.**
 
-## Password
+## How the password works
 
-Default password is: **`untiy764`**
+- Uses Vercel **Edge Middleware** + HTTP Basic Auth
+- Browser shows the native login popup
+- Password is read from the env var `SITE_PASSWORD`
+- Nothing on the page is reachable until the correct password is entered
 
-Change it in `index.html` — look for:
+## Setup on Vercel
 
-```js
-const CORRECT_PASSWORD = "untiy764";
-```
-
-## Deploy to Vercel
-
-### Option 1 – Vercel CLI (fastest)
+### 1. Deploy the project
 
 ```bash
 cd untiys-text-thing
 npx vercel
 ```
 
-Follow the prompts. It will give you a live URL.
+(or drag the folder onto vercel.com/new, or connect a GitHub repo)
 
-### Option 2 – GitHub + Vercel Dashboard
+### 2. Add the password (important)
 
-1. Push this folder to a GitHub repo
-2. Go to [vercel.com](https://vercel.com) → New Project → Import the repo
-3. Deploy (no build command needed – it's pure static)
+1. Open your project on [vercel.com](https://vercel.com)
+2. Go to **Settings → Environment Variables**
+3. Add a new variable:
 
-### Option 3 – Drag & drop
+| Name            | Value              | Environments          |
+|-----------------|--------------------|-----------------------|
+| `SITE_PASSWORD` | your-secret-pass   | Production, Preview, Development |
 
-1. Go to [vercel.com/new](https://vercel.com/new)
-2. Drag the entire `untiys-text-thing` folder onto the page
+4. **Redeploy** the project (Environment Variables only apply after a new deployment)
 
-## How the lock works
+### 3. Done
 
-- Full-screen password gate appears first
-- Nothing in the main UI is interactive until the correct password is entered
-- Once unlocked, the session stays unlocked in that browser tab (uses `sessionStorage`)
-- Closing the tab / opening a new one requires the password again
+Visit the site → browser asks for username + password.  
+- Username can be anything (or left blank)  
+- Password = the value you set in `SITE_PASSWORD`
+
+## Changing the password later
+
+Just edit `SITE_PASSWORD` in the Vercel dashboard and redeploy.  
+No code changes needed.
